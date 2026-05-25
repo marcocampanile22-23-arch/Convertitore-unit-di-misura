@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertitore unità di misura</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-bg: #151d30;
+            --panel-border: #233253;
+            --accent-color: #00e5ff;
+            --accent-hover: #00b3cc;
+            --text-main: #f0f4f8;
+            --text-muted: #8fa0dd;
+            --input-bg: #090d16;
+            --input-border: #314675;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(0, 229, 255, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(35, 50, 83, 0.3) 0px, transparent 50%);
+        }
+
+        header {
+            width: 100%;
+            max-width: 1100px;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--panel-border);
+            padding-bottom: 20px;
+            position: relative;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 2px;
+            background-color: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-main);
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        }
+
+        .author {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        main {
+            width: 100%;
+            max-width: 1100px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--accent-color);
+            opacity: 0.7;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-color);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 18px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 8px;
+        }
+
+        .card-title svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--accent-color);
+        }
+
+        .converter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+        }
+
+        input[type="number"] {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 12px;
+            color: var(--text-main);
+            font-size: 1.05rem;
+            font-weight: 500;
+            outline: none;
+            width: 60%;
+        }
+
+        /* Rimuove le freccette nei campi numerici */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        select {
+            background-color: #1a243d;
+            border: none;
+            border-left: 1px solid var(--input-border);
+            color: var(--text-main);
+            padding: 0 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            width: 40%;
+            transition: background-color 0.2s;
+        }
+
+        select:hover {
+            background-color: #233253;
+        }
+
+        .swap-btn {
+            align-self: center;
+            background: rgba(0, 229, 255, 0.1);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            color: var(--accent-color);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .swap-btn:hover {
+            background: var(--accent-color);
+            color: var(--bg-color);
+            transform: rotate(180deg);
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .swap-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .formula-box {
+            margin-top: 15px;
+            background-color: rgba(9, 13, 22, 0.6);
+            border: 1px dashed var(--panel-border);
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .formula-title {
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: var(--accent-color);
+            margin-bottom: 3px;
+            letter-spacing: 0.5px;
+        }
+
+        .formula-text {
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        footer {
+            margin-top: auto;
+            text-align: center;
+            padding: 20px 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+            max-width: 1100px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Convertitore unità di misura</h1>
+        <div class="author">Sviluppato da: Marco Campanile</div>
+    </header>
+
+    <main>
+        <!-- LUNGHEZZA -->
+        <div class="card" id="card-lunghezza">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M19,10.5V13.5H17.5V12H15.5V13.5H14V12H12V13.5H10.5V12H8.5V13.5H7V12H5V13.5H3.5V10.5H19M19,9H3.5A1.5,1.5 0 0,0 2,10.5V13.5A1.5,1.5 0 0,0 3.5,15H19A1.5,1.5 0 0,0 20.5,13.5V10.5A1.5,1.5 0 0,0 19,9Z"/></svg>
+                Lunghezza
+            </div>
+            <div class="converter-group">
+                <div class="input-wrapper">
+                    <input type="number" id="lunghezza-val1" placeholder="0" oninput="convert('lunghezza', 1)">
+                    <select id="lunghezza-unit1" onchange="convert('lunghezza', 1)">
+                        <option value="m">Metri (m)</option>
+                        <option value="km">Chilometri (km)</option>
+                        <option value="ft" selected>Piedi (ft)</option>
+                        <option value="in">Pollici (in)</option>
+                        <option value="nm">Miglia Nautiche (NM)</option>
+                    </select>
+                </div>
+                
+                <button class="swap-btn" onclick="swapUnits('lunghezza')" title="Inverti unità">
+                    <svg viewBox="0 0 24 24"><path d="M16,17.01V10H14V17.01H11L15,21L19,17.01H16M9,21V14H11V21H14L10,17L6,21H9M9,6.99V14H7V6.99H4L8,3L12,6.99H9M16,3V10H18V3H21L17,7L13,3H16Z"/></svg>
+                </button>
+
+                <div class="input-wrapper">
+                    <input type="number" id="lunghezza-val2" placeholder="0" oninput="convert('lunghezza', 2)">
+                    <select id="lunghezza-unit2" onchange="convert('lunghezza', 1)">
+                        <option value="m" selected>Metri (m)</option>
+                        <option value="km">Chilometri (km)</option>
+                        <option value="ft">Piedi (ft)</option>
+                        <option value="in">Pollici (in)</option>
+                        <option value="nm">Miglia Nautiche (NM)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="formula-box">
+                <div class="formula-title">Formula applicata</div>
+                <div class="formula-text" id="lunghezza-formula">-</div>
+            </div>
+        </div>
+
+        <!-- MASSA -->
+        <div class="card" id="card-massa">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M12,3A4,4 0 0,1 16,7C16,7.45 15.93,7.88 15.79,8.28L21,12.75V15H3V12.75L8.21,8.28C8.07,7.88 8,7.45 8,7A4,4 0 0,1 12,3M12,17A3,3 0 0,1 15,20A3,3 0 0,1 12,23A3,3 0 0,1 9,20A3,3 0 0,1 12,17Z"/></svg>
+                Massa
+            </div>
+            <div class="converter-group">
+                <div class="input-wrapper">
+                    <input type="number" id="massa-val1" placeholder="0" oninput="convert('massa', 1)">
+                    <select id="massa-unit1" onchange="convert('massa', 1)">
+                        <option value="kg">Chilogrammi (kg)</option>
+                        <option value="lb" selected>Libbre (lb)</option>
+                        <option value="oz">Once (oz)</option>
+                    </select>
+                </div>
+                
+                <button class="swap-btn" onclick="swapUnits('massa')">
+                    <svg viewBox="0 0 24 24"><path d="M16,17.01V10H14V17.01H11L15,21L19,17.01H16M9,21V14H11V21H14L10,17L6,21H9M9,6.99V14H7V6.99H4L8,3L12,6.99H9M16,3V10H18V3H21L17,7L13,3H16Z"/></svg>
+                </button>
+
+                <div class="input-wrapper">
+                    <input type="number" id="massa-val2" placeholder="0" oninput="convert('massa', 2)">
+                    <select id="massa-unit2" onchange="convert('massa', 1)">
+                        <option value="kg" selected>Chilogrammi (kg)</option>
+                        <option value="lb">Libbre (lb)</option>
+                        <option value="oz">Once (oz)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="formula-box">
+                <div class="formula-title">Formula applicata</div>
+                <div class="formula-text" id="massa-formula">-</div>
+            </div>
+        </div>
+
+        <!-- FORZA -->
+        <div class="card" id="card-forza">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M2,12H5V10.5L8.25,13.5L5,16.5V15H2V12M22,12H19V13.5L15.75,10.5L19,7.5V9H22,12M9.5,12A2.5,2.5 0 0,1 12,9.5A2.5,2.5 0 0,1 14.5,12A2.5,2.5 0 0,1 12,14.5A2.5,2.5 0 0,1 9.5,12Z"/></svg>
+                Forza
+            </div>
+            <div class="converter-group">
+                <div class="input-wrapper">
+                    <input type="number" id="forza-val1" placeholder="0" oninput="convert('forza', 1)">
+                    <select id="forza-unit1" onchange="convert('forza', 1)">
+                        <option value="n">Newton (N)</option>
+                        <option value="lbf" selected>Libbre forza (lbf)</option>
+                    </select>
+                </div>
+                
+                <button class="swap-btn" onclick="swapUnits('forza')">
+                    <svg viewBox="0 0 24 24"><path d="M16,17.01V10H14V17.01H11L15,21L19,17.01H16M9,21V14H11V21H14L10,17L6,21H9M9,6.99V14H7V6.99H4L8,3L12,6.99H9M16,3V10H18V3H21L17,7L13,3H16Z"/></svg>
+                </button>
+
+                <div class="input-wrapper">
+                    <input type="number" id="forza-val2" placeholder="0" oninput="convert('forza', 2)">
+                    <select id="forza-unit2" onchange="convert('forza', 1)">
+                        <option value="n" selected>Newton (N)</option>
+                        <option value="lbf">Libbre forza (lbf)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="formula-box">
+                <div class="formula-title">Formula applicata</div>
+                <div class="formula-text" id="forza-formula">-</div>
+            </div>
+        </div>
+
+        <!-- PRESSIONE -->
+        <div class="card" id="card-pressione">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12.5,6V12.2L15.8,14L15,15.2L11,13V6H12.5Z"/></svg>
+                Pressione
+            </div>
+            <div class="converter-group">
+                <div class="input-wrapper">
+                    <input type="number" id="pressione-val1" placeholder="0" oninput="convert('pressione', 1)">
+                    <select id="pressione-unit1" onchange="convert('pressione', 1)">
+                        <option value="pa">Pascal (Pa)</option>
+                        <option value="bar">Bar (bar)</option>
+                        <option value="psi" selected>PSI (psi)</option>
+                        <option value="atm">Atmosfere (atm)</option>
+                    </select>
+                </div>
+                
+                <button class="swap-btn" onclick="swapUnits('pressione')">
+                    <svg viewBox="0 0 24 24"><path d="M16,17.01V10H14V17.01H11L15,21L19,17.01H16M9,21V14H11V21H14L10,17L6,21H9M9,6.99V14H7V6.99H4L8,3L12,6.99H9M16,3V10H18V3H21L17,7L13,3H16Z"/></svg>
+                </button>
+
+                <div class="input-wrapper">
+                    <input type="number" id="pressione-val2" placeholder="0" oninput="convert('pressione', 2)">
+                    <select id="pressione-unit2" onchange="convert('pressione', 1)">
+                        <option value="pa">Pascal (Pa)</option>
+                        <option value="bar" selected>Bar (bar)</option>
+                        <option value="psi">PSI (psi)</option>
+                        <option value="atm">Atmosfere (atm)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="formula-box">
+                <div class="formula-title">Formula applicata</div>
+                <div class="formula-text" id="pressione-formula">-</div>
+            </div>
+        </div>
+
+        <!-- VELOCITÀ -->
+        <div class="card" id="card-velocita">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M12,4C6.47,4 2,8.5 2,14C2,19.5 6.47,24 12,24C17.53,24 22,19.5 22,14C22,8.5 17.53,4 12,4M12,6A8,8 0 0,1 20,14C20,15.5 19.6,16.92 18.9,18.1L17.4,16.6C17.8,15.81 18,14.93 18,14A6,6 0 0,0 12,8V6M12,10A4,4 0 0,1 16,14C16,14.93 15.68,15.79 15.14,16.46L11.5,12.82V10H12M12,18A4,4 0 0,1 8,14A4,4 0 0,1 12,10V12L14.76,14.76C14.28,16.63 12.63,18 12,18M6.1,18.1C5.4,16.92 5,15.5 5,14A8,8 0 0,1 13,6V8C7.47,8 3,12.5 3,14A6,6 0 0,0 9,20H12V22C6.47,22 6.1,18.1 6.1,18.1Z"/></svg>
+                Velocità
+            </div>
+            <div class="converter-group">
+                <div class="input-wrapper">
+                    <input type="number" id="velocita-val1" placeholder="0" oninput="convert('velocita', 1)">
+                    <select id="velocita-unit1" onchange="convert('velocita', 1)">
+                        <option value="ms">Metri al secondo (m/s)</option>
+                        <option value="kmh">Chilometri orari (km/h)</option>
+                        <option value="mph">Miglia orarie (mph)</option>
+                        <option value="kts" selected>Nodi (kts)</option>
+                    </select>
+                </div>
+                
+                <button class="swap-btn" onclick="swapUnits('velocita')">
+                    <svg viewBox="0 0 24 24"><path d="M16,17.01V10H14V17.01H11L15,21L19,17.01H16M9,21V14H11V21H14L10,17L6,21H9M9,6.99V14H7V6.99H4L8,3L12,6.99H9M16,3V10H18V3H21L17,7L13,3H16Z"/></svg>
+                </button>
+
+                <div class="input-wrapper">
+                    <input type="number" id="velocita-val2" placeholder="0" oninput="convert('velocita', 2)">
+                    <select id="velocita-unit2" onchange="convert('velocita', 1)">
+                        <option value="ms">Metri al secondo (m/s)</option>
+                        <option value="kmh" selected>Chilometri orari (km/h)</option>
+                        <option value="mph">Miglia orarie (mph)</option>
+                        <option value="kts">Nodi (kts)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="formula-box">
+                <div class="formula-title">Formula applicata</div>
+                <div class="formula-text" id="velocita-formula">-</div>
+            </div>
+        </div>
+
+        <!-- TEMPERATURA -->
+        <div class="card" id="card-temperatura">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M15 13V5A3 3 0 0 0 9 5V13A5 5 0 1 0 15 13M12 4A1 1 0 0 1 13 5V8H11V5A1 1 0 0 1 12 4Z"/></svg>
+                Temperatura
+            </div>
+            <div class="converter-group">
+                <div class="input-wrapper">
+                    <input type="number" id="temperatura-val1" placeholder="0" oninput="convert('temperatura', 1)">
+                    <select id="temperatura-unit1" onchange="convert('temperatura', 1)">
+                        <option value="c">Celsius (°C)</option>
+                        <option value="f" selected>Fahrenheit (°F)</option>
+                        <option value="k">Kelvin (K)</option>
+                    </select>
+                </div>
+                
+                <button class="swap-btn" onclick="swapUnits('temperatura')">
+                    <svg viewBox="0 0 24 24"><path d="M16,17.01V10H14V17.01H11L15,21L19,17.01H16M9,21V14H11V21H14L10,17L6,21H9M9,6.99V14H7V6.99H4L8,3L12,6.99H9M16,3V10H18V3H21L17,7L13,3H16Z"/></svg>
+                </button>
+
+                <div class="input-wrapper">
+                    <input type="number" id="temperatura-val2" placeholder="0" oninput="convert('temperatura', 2)">
+                    <select id="temperatura-unit2" onchange="convert('temperatura', 1)">
+                        <option value="c" selected>Celsius (°C)</option>
+                        <option value="f">Fahrenheit (°F)</option>
+                        <option value="k">Kelvin (K)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="formula-box">
+                <div class="formula-title">Formula applicata</div>
+                <div class="formula-text" id="temperatura-formula">-</div>
+            </div>
+        </div>
+
+        <!-- POTENZA -->
+        <div class="card" id="card-potenza">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M7,2H17A2,2 0 0,1 19,4V20A2,2 0 0,1 17,22H7A2,2 0 0,1 5,20V4A2,2 0 0,1 7,2M11,6V14H13V6H11M11,16V18H13V16H11Z"/></svg>
+                Potenza
+            </div>
+            <div class="converter-group">
+                <div class="input-wrapper">
+                    <input type="number" id="potenza-val1" placeholder="0" oninput="convert('potenza', 1)">
+                    <select id="potenza-unit1" onchange="convert('potenza', 1)">
+                        <option value="w">Watt (W)</option>
+                        <option value="kw">Chilowatt (kW)</option>
+                        <option value="hp" selected>Cavalli vapore (HP)</option>
+                    </select>
+                </div>
+                
+                <button class="swap-btn" onclick="swapUnits('potenza')">
+                    <svg viewBox="0 0 24 24"><path d="M16,17.01V10H14V17.01H11L15,21L19,17.01H16M9,21V14H11V21H14L10,17L6,21H9M9,6.99V14H7V6.99H4L8,3L12,6.99H9M16,3V10H18V3H21L17,7L13,3H16Z"/></svg>
+                </button>
+
+                <div class="input-wrapper">
+                    <input type="number" id="potenza-val2" placeholder="0" oninput="convert('potenza', 2)">
+                    <select id="potenza-unit2" onchange="convert('potenza', 1)">
+                        <option value="w">Watt (W)</option>
+                        <option value="kw" selected>Chilowatt (kW)</option>
+                        <option value="hp">Cavalli vapore (HP)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="formula-box">
+                <div class="formula-title">Formula applicata</div>
+                <div class="formula-text" id="potenza-formula">-</div>
+            </div>
+        </div>
+
+        <!-- AREA -->
+        <div class="card" id="card-area">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19Z"/></svg>
+                Area
+            </div>
+            <div class="converter-group">
+                <div class="input-wrapper">
+                    <input type="number" id="area-val1" placeholder="0" oninput="convert('area', 1)">
+                    <select id="area-unit1" onchange="convert('area', 1)">
+                        <option value="m2">Metri quadri (m²)</option>
+                        <option value="ha">Ettari (ha)</option>
+                        <option value="sqft" selected>Piedi quadri (sq ft)</option>
+                        <option value="acre">Acri (ac)</option>
+                    </select>
+                </div>
+                
+                <button class="swap-btn" onclick="swapUnits('area')">
+                    <svg viewBox="0 0 24 24"><path d="M16,17.01V10H14V17.01H11L15,21L19,17.01H16M9,21V14H11V21H14L10,17L6,21H9M9,6.99V14H7V6.99H4L8,3L12,6.99H9M16,3V10H18V3H21L17,7L13,3H16Z"/></svg>
+                </button>
+
+                <div class="input-wrapper">
+                    <input type="number" id="area-val2" placeholder="0" oninput="convert('area', 2)">
+                    <select id="area-unit2" onchange="convert('area', 1)">
+                        <option value="m2" selected>Metri quadri (m²)</option>
+                        <option value="ha">Ettari (ha)</option>
+                        <option value="sqft">Piedi quadri (sq ft)</option>
+                        <option value="acre">Acri (ac)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="formula-box">
+                <div class="formula-title">Formula applicata</div>
+                <div class="formula-text" id="area-formula">-</div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        &copy; 2026 Marco Campanile - Convertitore Aeronautico Avanzato. Nessuna dipendenza esterna.
+    </footer>
+
+    <script>
+        // Fattori di conversione verso un'unità di base (Ancoraggio)
+        const factors = {
+            lunghezza: { base: 'm', m: 1, km: 1000, ft: 0.3048, in: 0.0254, nm: 1852 },
+            massa: { base: 'kg', kg: 1, lb: 0.45359237, oz: 0.028349523125 },
+            forza: { base: 'n', n: 1, lbf: 4.4482216153 },
+            pressione: { base: 'pa', pa: 1, bar: 100000, psi: 6894.75729, atm: 101325 },
+            velocita: { base: 'ms', ms: 1, kmh: 1/3.6, mph: 0.44704, kts: 0.514444 },
+            potenza: { base: 'w', w: 1, kw: 1000, hp: 745.699872 },
+            area: { base: 'm2', m2: 1, ha: 10000, sqft: 0.09290304, acre: 4046.8564224 }
+        };
+
+        // Formule testuali per la visualizzazione dinamica
+        const formulas = {
+            lunghezza: (u1, u2) => `Valore in ${u1} × (${factors.lunghezza[u1]} / ${factors.lunghezza[u2]}) = ${u2}`,
+            massa: (u1, u2) => `Valore in ${u1} × (${factors.massa[u1]} / ${factors.massa[u2]}) = ${u2}`,
+            forza: (u1, u2) => `Valore in ${u1} × (${factors.forza[u1]} / ${factors.forza[u2]}) = ${u2}`,
+            pressione: (u1, u2) => `Valore in ${u1} × (${factors.pressione[u1]} / ${factors.pressione[u2]}) = ${u2}`,
+            velocita: (u1, u2) => `Valore in ${u1} × (${factors.velocita[u1]} / ${factors.velocita[u2]}) = ${u2}`,
+            potenza: (u1, u2) => `Valore in ${u1} × (${factors.potenza[u1]} / ${factors.potenza[u2]}) = ${u2}`,
+            area: (u1, u2) => `Valore in ${u1} × (${factors.area[u1]} / ${factors.area[u2]}) = ${u2}`,
+            // Temperatura ha logiche dedicate (non lineari basate solo su moltiplicazione)
+            temperatura: (u1, u2) => {
+                if(u1 === u2) return `Stessa unità: nessun calcolo`;
+                if(u1 === 'c' && u2 === 'f') return `(°C × 9/5) + 32 = °F`;
+                if(u1 === 'f' && u2 === 'c') return `(°F - 32) × 5/9 = °C`;
+                if(u1 === 'c' && u2 === 'k') return `°C + 271.15 = K`;
+                if(u1 === 'k' && u2 === 'c') return `K - 271.15 = °C`;
+                if(u1 === 'f' && u2 === 'k') return `(°F - 32) × 5/9 + 273.15 = K`;
+                if(u1 === 'k' && u2 === 'f') return `(K - 273.15) × 9/5 + 32 = °F`;
+            }
+        };
+
+        function formatNumber(num) {
+            if (num === 0) return 0;
+            // Se è un numero con molte cifre decimali, lo arrotonda a un massimo di 6 cifre significative rimovendo gli zeri superflui
+            let fixed = Number(num.toFixed(6));
+            if(fixed === 0) return num.toExponential(4); // Per numeri piccolissimi
+            return fixed;
+        }
+
+        function convert(category, triggerSource) {
+            const u1 = document.getElementById(`${category}-unit1`).value;
+            const u2 = document.getElementById(`${category}-unit2`).value;
+            
+            const val1El = document.getElementById(`${category}-val1`);
+            const val2El = document.getElementById(`${category}-val2`);
+            const formulaEl = document.getElementById(`${category}-formula`);
+
+            let inputVal;
+            if (triggerSource === 1) {
+                inputVal = parseFloat(val1El.value);
+                if (isNaN(inputVal)) { val2El.value = ""; formulaEl.innerText = "-"; return; }
+            } else {
+                inputVal = parseFloat(val2El.value);
+                if (isNaN(inputVal)) { val1El.value = ""; formulaEl.innerText = "-"; return; }
+            }
+
+            // Logica specifica per la temperatura
+            if (category === 'temperatura') {
+                let tempInC;
+                const fromUnit = triggerSource === 1 ? u1 : u2;
+                const toUnit = triggerSource === 1 ? u2 : u1;
+
+                // Converti da sorgente a Celsius (base)
+                if (fromUnit === 'c') tempInC = inputVal;
+                else if (fromUnit === 'f') tempInC = (inputVal - 32) * 5 / 9;
+                else if (fromUnit === 'k') tempInC = inputVal - 273.15;
+
+                // Converti da Celsius a destinazione
+                let result;
+                if (toUnit === 'c') result = tempInC;
+                else if (toUnit === 'f') result = (tempInC * 9 / 5) + 32;
+                else if (toUnit === 'k') result = tempInC + 273.15;
+
+                if (triggerSource === 1) {
+                    val2El.value = formatNumber(result);
+                    formulaEl.innerText = formulas.temperatura(u1, u2);
+                } else {
+                    val1El.value = formatNumber(result);
+                    formulaEl.innerText = formulas.temperatura(u2, u1);
+                }
+                return;
+            }
+
+            // Logica standard per tutte le altre unità lineari
+            const catFactors = factors[category];
+            if (triggerSource === 1) {
+                // Da unita1 a base, poi da base a unita2
+                let valInBase = inputVal * catFactors[u1];
+                let finalVal = valInBase / catFactors[u2];
+                val2El.value = formatNumber(finalVal);
+                formulaEl.innerText = formulas[category](u1, u2);
+            } else {
+                // Da unita2 a base, poi da base a unita1
+                let valInBase = inputVal * catFactors[u2];
+                let finalVal = valInBase / catFactors[u1];
+                val1El.value = formatNumber(finalVal);
+                formulaEl.innerText = formulas[category](u2, u1);
+            }
+        }
+
+        function swapUnits(category) {
+            const u1El = document.getElementById(`${category}-unit1`);
+            const u2El = document.getElementById(`${category}-unit2`);
+            const val1El = document.getElementById(`${category}-val1`);
+            const val2El = document.getElementById(`${category}-val2`);
+
+            // Scambia le unità nei select
+            const tempUnit = u1El.value;
+            u1El.value = u2El.value;
+            u2El.value = tempUnit;
+
+            // Scambia i valori numerici correnti
+            const tempVal = val1El.value;
+            val1El.value = val2El.value;
+            val2El.value = tempVal;
+
+            // Riesegui la conversione mantenendo il focus logico sul primo campo
+            convert(category, 1);
+        }
+
+        // Inizializza le formule al caricamento iniziale della pagina
+        window.onload = function() {
+            const categories = ['lunghezza', 'massa', 'forza', 'pressione', 'velocita', 'temperatura', 'potenza', 'area'];
+            categories.forEach(cat => {
+                const u1 = document.getElementById(`${cat}-unit1`).value;
+                const u2 = document.getElementById(`${cat}-unit2`).value;
+                document.getElementById(`${cat}-formula`).innerText = formulas[cat](u1, u2);
+            });
+        }
+    </script>
+</body>
+</html>
