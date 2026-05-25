@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNIT CONVERSION SYSTEM — Marco Campanile</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&display=swap');
+
+  :root {
+    --bg-primary: #090c10;
+    --bg-secondary: #0d1117;
+    --bg-panel: #111820;
+    --bg-card: #141e28;
+    --bg-input: #0a0f15;
+    --accent: #00d4ff;
+    --accent-dim: #0099bb;
+    --accent-glow: rgba(0,212,255,0.12);
+    --amber: #ffb300;
+    --amber-dim: #cc8f00;
+    --green: #00e676;
+    --red: #ff3d3d;
+    --text-primary: #e8f4f8;
+    --text-secondary: #7a9bb5;
+    --text-muted: #3d5a6e;
+    --border: #1a2d3d;
+    --border-accent: rgba(0,212,255,0.25);
+    --scanline: rgba(0,212,255,0.015);
+    --font-display: 'Orbitron', monospace;
+    --font-ui: 'Rajdhani', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      var(--scanline) 2px,
+      var(--scanline) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse 120% 80% at 50% 0%, rgba(0,80,120,0.15) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+    position: relative;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+
+  .callsign {
+    font-family: var(--font-display);
+    font-size: clamp(9px, 1.8vw, 11px);
+    color: var(--accent);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(18px, 3.5vw, 28px);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    line-height: 1.1;
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .header-meta {
+    text-align: right;
+  }
+
+  .pilot-name {
+    font-family: var(--font-display);
+    font-size: 11px;
+    color: var(--amber);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .version-badge {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 8px;
+    border: 1px solid var(--border-accent);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent-dim);
+    letter-spacing: 0.15em;
+  }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .status-dot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-secondary);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .dot.amber { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .divider-line {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--border) 40%, transparent 100%);
+  }
+
+  /* ── CATEGORY TABS ── */
+  .tabs-scroll {
+    overflow-x: auto;
+    margin-bottom: 24px;
+    scrollbar-width: none;
+  }
+  .tabs-scroll::-webkit-scrollbar { display: none; }
+
+  .tabs {
+    display: flex;
+    gap: 2px;
+    min-width: max-content;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+  }
+
+  .tab {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px 10px;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border: 1px solid transparent;
+    border-bottom: none;
+    cursor: pointer;
+    background: transparent;
+    transition: color 0.2s, background 0.2s, border-color 0.2s;
+    white-space: nowrap;
+    position: relative;
+    top: 1px;
+  }
+
+  .tab svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  .tab:hover {
+    color: var(--text-secondary);
+    background: rgba(0,212,255,0.04);
+    border-color: var(--border);
+  }
+
+  .tab.active {
+    color: var(--accent);
+    background: var(--bg-card);
+    border-color: var(--border-accent);
+    border-bottom: 1px solid var(--bg-card);
+  }
+
+  /* ── CONVERTER PANEL ── */
+  .panel {
+    display: none;
+    background: var(--bg-card);
+    border: 1px solid var(--border-accent);
+    padding: 28px;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .panel.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-accent);
+    background: var(--accent-glow);
+  }
+
+  .panel-icon svg { width: 18px; height: 18px; color: var(--accent); }
+
+  .panel-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+
+  .panel-subtitle {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+  }
+
+  /* ── SUB-TABS (unit types) ── */
+  .subtabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .subtab {
+    padding: 5px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.15s;
+  }
+
+  .subtab:hover { color: var(--text-secondary); border-color: var(--border-accent); }
+  .subtab.active { color: var(--accent); border-color: var(--accent); background: var(--accent-glow); }
+
+  /* ── CONVERTER GRID ── */
+  .converter {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: start;
+    gap: 16px;
+  }
+
+  @media (max-width: 580px) {
+    .converter { grid-template-columns: 1fr; }
+    .swap-col { display: flex; justify-content: center; }
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .input-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .unit-system {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border: 1px solid;
+  }
+
+  .unit-system.si { color: var(--accent); border-color: var(--accent-dim); background: var(--accent-glow); }
+  .unit-system.imperial { color: var(--amber); border-color: var(--amber-dim); background: rgba(255,179,0,0.08); }
+
+  .unit-name {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  input[type="number"] {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 400;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  input[type="number"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow), inset 0 0 12px rgba(0,212,255,0.04);
+  }
+
+  input.imperial-input:focus {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 2px rgba(255,179,0,0.1), inset 0 0 12px rgba(255,179,0,0.03);
+  }
+
+  .swap-col { display: flex; align-items: center; padding-top: 48px; }
+
+  .swap-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0;
+  }
+
+  .swap-btn svg { width: 16px; height: 16px; }
+
+  .swap-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  /* ── FORMULA BOX ── */
+  .formula-box {
+    margin-top: 20px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+  }
+
+  .formula-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-dim);
+    margin-bottom: 6px;
+  }
+
+  .formula-text {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+
+  .formula-text .var { color: var(--accent); }
+  .formula-text .op { color: var(--amber); }
+  .formula-text .num { color: var(--green); }
+
+  /* ── RESULT DISPLAY ── */
+  .result-row {
+    margin-top: 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .result-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    min-width: 70px;
+  }
+
+  .result-value {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    color: var(--green);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .footer-left {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.8;
+  }
+
+  .footer-right {
+    font-family: var(--font-display);
+    font-size: 10px;
+    color: var(--accent-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  /* ── COMPASS DECORATION ── */
+  .compass-deco {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    opacity: 0.06;
+    pointer-events: none;
+    z-index: 0;
+    animation: spin 40s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── CORNER BRACKETS ── */
+  .bracket-tl, .bracket-br {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+  }
+
+  .bracket-tl { top: -1px; left: -1px; border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+  .bracket-br { bottom: -1px; right: -1px; border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-top">
+      <div>
+        <div class="callsign">▶ SYS/CONV — NAVIGATION COMPUTER — MEASUREMENT UNIT TRANSLATOR</div>
+        <h1>UNIT CONVERSION <span>SYSTEM</span></h1>
+      </div>
+      <div class="header-meta">
+        <div class="pilot-name">◆ Marco Campanile</div>
+        <div class="version-badge">REV 1.0 · SI ↔ IMPERIAL</div>
+      </div>
+    </div>
+    <div class="status-bar">
+      <div class="status-dot"><span class="dot"></span> ONLINE</div>
+      <div class="status-dot"><span class="dot amber"></span> STANDBY</div>
+      <div class="status-dot">CATEGORIES: 8</div>
+      <div class="status-dot">CONVERSIONS: ACTIVE</div>
+    </div>
+    <div class="divider-line"></div>
+  </header>
+
+  <!-- CATEGORY TABS -->
+  <div class="tabs-scroll">
+    <div class="tabs">
+      <button class="tab active" data-panel="length" onclick="switchPanel('length')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18M3 6l3 6-3 6M21 6l-3 6 3 6"/></svg>
+        LUNGHEZZA
+      </button>
+      <button class="tab" data-panel="mass" onclick="switchPanel('mass')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M8 10H4l-1 8h18l-1-8h-4"/></svg>
+        MASSA
+      </button>
+      <button class="tab" data-panel="force" onclick="switchPanel('force')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        FORZA
+      </button>
+      <button class="tab" data-panel="pressure" onclick="switchPanel('pressure')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 3"/></svg>
+        PRESSIONE
+      </button>
+      <button class="tab" data-panel="speed" onclick="switchPanel('speed')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 17H3a1 1 0 01-1-1v-3a1 1 0 011-1h2.5M19 17h2a1 1 0 001-1v-3a1 1 0 00-1-1h-2.5M12 3v2M4.22 5.22l1.42 1.42M19.78 5.22l-1.42 1.42M3 12h1M20 12h1"/><circle cx="12" cy="12" r="4"/></svg>
+        VELOCITÀ
+      </button>
+      <button class="tab" data-panel="temperature" onclick="switchPanel('temperature')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 14.76V3.5a2.5 2.5 0 00-5 0v11.26a4.5 4.5 0 105 0z"/></svg>
+        TEMPERATURA
+      </button>
+      <button class="tab" data-panel="power" onclick="switchPanel('power')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        POTENZA
+      </button>
+      <button class="tab" data-panel="area" onclick="switchPanel('area')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 3v18"/></svg>
+        AREA
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PANELS ═══════════════════ -->
+
+  <!-- LUNGHEZZA -->
+  <div class="panel active" id="panel-length">
+    <div class="panel-header">
+      <div class="panel-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18M3 6l3 6-3 6M21 6l-3 6 3 6"/></svg>
+      </div>
+      <div>
+        <div class="panel-title">LUNGHEZZA · LENGTH</div>
+        <div class="panel-subtitle">LINEAR DISTANCE MEASUREMENT MODULE</div>
+      </div>
+    </div>
+    <div class="subtabs" id="subtabs-length"></div>
+    <div id="conv-length"></div>
+  </div>
+
+  <!-- MASSA -->
+  <div class="panel" id="panel-mass">
+    <div class="panel-header">
+      <div class="panel-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M8 10H4l-1 8h18l-1-8h-4"/></svg>
+      </div>
+      <div>
+        <div class="panel-title">MASSA · MASS</div>
+        <div class="panel-subtitle">INERTIAL MASS MEASUREMENT MODULE</div>
+      </div>
+    </div>
+    <div class="subtabs" id="subtabs-mass"></div>
+    <div id="conv-mass"></div>
+  </div>
+
+  <!-- FORZA -->
+  <div class="panel" id="panel-force">
+    <div class="panel-header">
+      <div class="panel-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div>
+        <div class="panel-title">FORZA · FORCE</div>
+        <div class="panel-subtitle">DYNAMIC FORCE MEASUREMENT MODULE</div>
+      </div>
+    </div>
+    <div class="subtabs" id="subtabs-force"></div>
+    <div id="conv-force"></div>
+  </div>
+
+  <!-- PRESSIONE -->
+  <div class="panel" id="panel-pressure">
+    <div class="panel-header">
+      <div class="panel-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 3"/></svg>
+      </div>
+      <div>
+        <div class="panel-title">PRESSIONE · PRESSURE</div>
+        <div class="panel-subtitle">ATMOSPHERIC PRESSURE MEASUREMENT MODULE</div>
+      </div>
+    </div>
+    <div class="subtabs" id="subtabs-pressure"></div>
+    <div id="conv-pressure"></div>
+  </div>
+
+  <!-- VELOCITÀ -->
+  <div class="panel" id="panel-speed">
+    <div class="panel-header">
+      <div class="panel-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 17H3a1 1 0 01-1-1v-3a1 1 0 011-1h2.5M19 17h2a1 1 0 001-1v-3a1 1 0 00-1-1h-2.5"/><circle cx="12" cy="12" r="4"/></svg>
+      </div>
+      <div>
+        <div class="panel-title">VELOCITÀ · SPEED</div>
+        <div class="panel-subtitle">AIRSPEED / GROUNDSPEED MEASUREMENT MODULE</div>
+      </div>
+    </div>
+    <div class="subtabs" id="subtabs-speed"></div>
+    <div id="conv-speed"></div>
+  </div>
+
+  <!-- TEMPERATURA -->
+  <div class="panel" id="panel-temperature">
+    <div class="panel-header">
+      <div class="panel-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 14.76V3.5a2.5 2.5 0 00-5 0v11.26a4.5 4.5 0 105 0z"/></svg>
+      </div>
+      <div>
+        <div class="panel-title">TEMPERATURA · TEMPERATURE</div>
+        <div class="panel-subtitle">THERMAL SCALE CONVERSION MODULE</div>
+      </div>
+    </div>
+    <div class="subtabs" id="subtabs-temperature"></div>
+    <div id="conv-temperature"></div>
+  </div>
+
+  <!-- POTENZA -->
+  <div class="panel" id="panel-power">
+    <div class="panel-header">
+      <div class="panel-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div>
+        <div class="panel-title">POTENZA · POWER</div>
+        <div class="panel-subtitle">ENGINE POWER OUTPUT MEASUREMENT MODULE</div>
+      </div>
+    </div>
+    <div class="subtabs" id="subtabs-power"></div>
+    <div id="conv-power"></div>
+  </div>
+
+  <!-- AREA -->
+  <div class="panel" id="panel-area">
+    <div class="panel-header">
+      <div class="panel-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 3v18"/></svg>
+      </div>
+      <div>
+        <div class="panel-title">AREA · AREA</div>
+        <div class="panel-subtitle">SURFACE AREA MEASUREMENT MODULE</div>
+      </div>
+    </div>
+    <div class="subtabs" id="subtabs-area"></div>
+    <div id="conv-area"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-left">
+      SYS/CONV v1.0 — UNIT CONVERSION SYSTEM<br>
+      STANDALONE MODE · NO SERVER REQUIRED · OFFLINE CAPABLE
+    </div>
+    <div class="footer-right">◆ MARCO CAMPANILE</div>
+  </footer>
+</div>
+
+<!-- COMPASS DECORATION -->
+<svg class="compass-deco" viewBox="0 0 100 100" fill="none" stroke="white" stroke-width="1">
+  <circle cx="50" cy="50" r="48"/>
+  <circle cx="50" cy="50" r="35"/>
+  <line x1="50" y1="2" x2="50" y2="20"/><line x1="50" y1="80" x2="50" y2="98"/>
+  <line x1="2" y1="50" x2="20" y2="50"/><line x1="80" y1="50" x2="98" y2="50"/>
+  <polygon points="50,10 46,50 50,42 54,50" fill="white"/>
+  <polygon points="50,90 46,50 50,58 54,50" fill="white" opacity="0.3"/>
+  <text x="50" y="6" text-anchor="middle" font-size="6" fill="white">N</text>
+  <text x="50" y="98" text-anchor="middle" font-size="6" fill="white">S</text>
+  <text x="3" y="53" font-size="6" fill="white">W</text>
+  <text x="93" y="53" font-size="6" fill="white">E</text>
+</svg>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONVERSION DATA
+// ═══════════════════════════════════════════════════
+const CONVERSIONS = {
+  length: [
+    {
+      id:'m-ft', siName:'Metro', siUnit:'m', impName:'Piede', impUnit:'ft',
+      siToImp: v => v * 3.280839895,
+      impToSi: v => v / 3.280839895,
+      formula: '<span class="var">ft</span> <span class="op">=</span> <span class="var">m</span> <span class="op">×</span> <span class="num">3.280839895</span>  |  <span class="var">m</span> <span class="op">=</span> <span class="var">ft</span> <span class="op">÷</span> <span class="num">3.280839895</span>'
+    },
+    {
+      id:'km-mi', siName:'Kilometro', siUnit:'km', impName:'Miglio', impUnit:'mi',
+      siToImp: v => v * 0.6213711922,
+      impToSi: v => v / 0.6213711922,
+      formula: '<span class="var">mi</span> <span class="op">=</span> <span class="var">km</span> <span class="op">×</span> <span class="num">0.6213712</span>  |  <span class="var">km</span> <span class="op">=</span> <span class="var">mi</span> <span class="op">×</span> <span class="num">1.609344</span>'
+    },
+    {
+      id:'m-yd', siName:'Metro', siUnit:'m', impName:'Iarda', impUnit:'yd',
+      siToImp: v => v * 1.0936132983,
+      impToSi: v => v / 1.0936132983,
+      formula: '<span class="var">yd</span> <span class="op">=</span> <span class="var">m</span> <span class="op">×</span> <span class="num">1.0936133</span>  |  <span class="var">m</span> <span class="op">=</span> <span class="var">yd</span> <span class="op">×</span> <span class="num">0.9144</span>'
+    },
+    {
+      id:'cm-in', siName:'Centimetro', siUnit:'cm', impName:'Pollice', impUnit:'in',
+      siToImp: v => v * 0.393700787,
+      impToSi: v => v / 0.393700787,
+      formula: '<span class="var">in</span> <span class="op">=</span> <span class="var">cm</span> <span class="op">×</span> <span class="num">0.393700787</span>  |  <span class="var">cm</span> <span class="op">=</span> <span class="var">in</span> <span class="op">×</span> <span class="num">2.54</span>'
+    },
+    {
+      id:'km-nmi', siName:'Kilometro', siUnit:'km', impName:'Miglio naut.', impUnit:'NM',
+      siToImp: v => v * 0.539956803,
+      impToSi: v => v / 0.539956803,
+      formula: '<span class="var">NM</span> <span class="op">=</span> <span class="var">km</span> <span class="op">×</span> <span class="num">0.5399568</span>  |  <span class="var">km</span> <span class="op">=</span> <span class="var">NM</span> <span class="op">×</span> <span class="num">1.852</span>'
+    }
+  ],
+  mass: [
+    {
+      id:'kg-lb', siName:'Kilogrammo', siUnit:'kg', impName:'Libbra', impUnit:'lb',
+      siToImp: v => v * 2.204622622,
+      impToSi: v => v / 2.204622622,
+      formula: '<span class="var">lb</span> <span class="op">=</span> <span class="var">kg</span> <span class="op">×</span> <span class="num">2.204622622</span>  |  <span class="var">kg</span> <span class="op">=</span> <span class="var">lb</span> <span class="op">×</span> <span class="num">0.45359237</span>'
+    },
+    {
+      id:'g-oz', siName:'Grammo', siUnit:'g', impName:'Oncia', impUnit:'oz',
+      siToImp: v => v * 0.035273962,
+      impToSi: v => v / 0.035273962,
+      formula: '<span class="var">oz</span> <span class="op">=</span> <span class="var">g</span> <span class="op">×</span> <span class="num">0.035273962</span>  |  <span class="var">g</span> <span class="op">=</span> <span class="var">oz</span> <span class="op">×</span> <span class="num">28.349523</span>'
+    },
+    {
+      id:'t-ton', siName:'Tonnellata (t)', siUnit:'t', impName:'Ton corta', impUnit:'ton',
+      siToImp: v => v * 1.102311311,
+      impToSi: v => v / 1.102311311,
+      formula: '<span class="var">ton</span> <span class="op">=</span> <span class="var">t</span> <span class="op">×</span> <span class="num">1.102311311</span>  |  <span class="var">t</span> <span class="op">=</span> <span class="var">ton</span> <span class="op">×</span> <span class="num">0.90718474</span>'
+    },
+    {
+      id:'kg-slug', siName:'Kilogrammo', siUnit:'kg', impName:'Slug', impUnit:'slug',
+      siToImp: v => v * 0.068521766,
+      impToSi: v => v / 0.068521766,
+      formula: '<span class="var">slug</span> <span class="op">=</span> <span class="var">kg</span> <span class="op">×</span> <span class="num">0.0685218</span>  |  <span class="var">kg</span> <span class="op">=</span> <span class="var">slug</span> <span class="op">×</span> <span class="num">14.59390</span>'
+    }
+  ],
+  force: [
+    {
+      id:'N-lbf', siName:'Newton', siUnit:'N', impName:'Libbra-forza', impUnit:'lbf',
+      siToImp: v => v * 0.224808943,
+      impToSi: v => v / 0.224808943,
+      formula: '<span class="var">lbf</span> <span class="op">=</span> <span class="var">N</span> <span class="op">×</span> <span class="num">0.224808943</span>  |  <span class="var">N</span> <span class="op">=</span> <span class="var">lbf</span> <span class="op">×</span> <span class="num">4.4482216</span>'
+    },
+    {
+      id:'kN-kip', siName:'Kilonewton', siUnit:'kN', impName:'Kip', impUnit:'kip',
+      siToImp: v => v * 0.224808943,
+      impToSi: v => v / 0.224808943,
+      formula: '<span class="var">kip</span> <span class="op">=</span> <span class="var">kN</span> <span class="op">×</span> <span class="num">0.224808943</span>  |  <span class="var">kN</span> <span class="op">=</span> <span class="var">kip</span> <span class="op">×</span> <span class="num">4.4482216</span>'
+    },
+    {
+      id:'N-ozf', siName:'Newton', siUnit:'N', impName:'Oncia-forza', impUnit:'ozf',
+      siToImp: v => v * 3.596943089,
+      impToSi: v => v / 3.596943089,
+      formula: '<span class="var">ozf</span> <span class="op">=</span> <span class="var">N</span> <span class="op">×</span> <span class="num">3.596943089</span>  |  <span class="var">N</span> <span class="op">=</span> <span class="var">ozf</span> <span class="op">×</span> <span class="num">0.27801385</span>'
+    }
+  ],
+  pressure: [
+    {
+      id:'Pa-psi', siName:'Pascal', siUnit:'Pa', impName:'PSI', impUnit:'psi',
+      siToImp: v => v * 0.000145038,
+      impToSi: v => v / 0.000145038,
+      formula: '<span class="var">psi</span> <span class="op">=</span> <span class="var">Pa</span> <span class="op">×</span> <span class="num">0.000145038</span>  |  <span class="var">Pa</span> <span class="op">=</span> <span class="var">psi</span> <span class="op">×</span> <span class="num">6894.757</span>'
+    },
+    {
+      id:'kPa-psi', siName:'Kilopascal', siUnit:'kPa', impName:'PSI', impUnit:'psi',
+      siToImp: v => v * 0.14503774,
+      impToSi: v => v / 0.14503774,
+      formula: '<span class="var">psi</span> <span class="op">=</span> <span class="var">kPa</span> <span class="op">×</span> <span class="num">0.14503774</span>  |  <span class="var">kPa</span> <span class="op">=</span> <span class="var">psi</span> <span class="op">×</span> <span class="num">6.894757</span>'
+    },
+    {
+      id:'bar-psi', siName:'Bar', siUnit:'bar', impName:'PSI', impUnit:'psi',
+      siToImp: v => v * 14.503774,
+      impToSi: v => v / 14.503774,
+      formula: '<span class="var">psi</span> <span class="op">=</span> <span class="var">bar</span> <span class="op">×</span> <span class="num">14.503774</span>  |  <span class="var">bar</span> <span class="op">=</span> <span class="var">psi</span> <span class="op">×</span> <span class="num">0.0689476</span>'
+    },
+    {
+      id:'hPa-inHg', siName:'Ettopascal', siUnit:'hPa', impName:'Pollici Hg', impUnit:'inHg',
+      siToImp: v => v * 0.02952999,
+      impToSi: v => v / 0.02952999,
+      formula: '<span class="var">inHg</span> <span class="op">=</span> <span class="var">hPa</span> <span class="op">×</span> <span class="num">0.02952999</span>  |  <span class="var">hPa</span> <span class="op">=</span> <span class="var">inHg</span> <span class="op">×</span> <span class="num">33.86389</span>'
+    },
+    {
+      id:'Pa-atm', siName:'Pascal', siUnit:'Pa', impName:'Atmosfera', impUnit:'atm',
+      siToImp: v => v / 101325,
+      impToSi: v => v * 101325,
+      formula: '<span class="var">atm</span> <span class="op">=</span> <span class="var">Pa</span> <span class="op">÷</span> <span class="num">101325</span>  |  <span class="var">Pa</span> <span class="op">=</span> <span class="var">atm</span> <span class="op">×</span> <span class="num">101325</span>'
+    }
+  ],
+  speed: [
+    {
+      id:'ms-mph', siName:'Metro/sec', siUnit:'m/s', impName:'Miglia/ora', impUnit:'mph',
+      siToImp: v => v * 2.236936292,
+      impToSi: v => v / 2.236936292,
+      formula: '<span class="var">mph</span> <span class="op">=</span> <span class="var">m/s</span> <span class="op">×</span> <span class="num">2.236936292</span>  |  <span class="var">m/s</span> <span class="op">=</span> <span class="var">mph</span> <span class="op">×</span> <span class="num">0.44704</span>'
+    },
+    {
+      id:'kmh-mph', siName:'Km/ora', siUnit:'km/h', impName:'Miglia/ora', impUnit:'mph',
+      siToImp: v => v * 0.6213711922,
+      impToSi: v => v / 0.6213711922,
+      formula: '<span class="var">mph</span> <span class="op">=</span> <span class="var">km/h</span> <span class="op">×</span> <span class="num">0.6213712</span>  |  <span class="var">km/h</span> <span class="op">=</span> <span class="var">mph</span> <span class="op">×</span> <span class="num">1.609344</span>'
+    },
+    {
+      id:'kmh-kts', siName:'Km/ora', siUnit:'km/h', impName:'Nodi', impUnit:'kts',
+      siToImp: v => v * 0.539956803,
+      impToSi: v => v / 0.539956803,
+      formula: '<span class="var">kts</span> <span class="op">=</span> <span class="var">km/h</span> <span class="op">×</span> <span class="num">0.5399568</span>  |  <span class="var">km/h</span> <span class="op">=</span> <span class="var">kts</span> <span class="op">×</span> <span class="num">1.852</span>'
+    },
+    {
+      id:'ms-kts', siName:'Metro/sec', siUnit:'m/s', impName:'Nodi', impUnit:'kts',
+      siToImp: v => v * 1.943844492,
+      impToSi: v => v / 1.943844492,
+      formula: '<span class="var">kts</span> <span class="op">=</span> <span class="var">m/s</span> <span class="op">×</span> <span class="num">1.943844492</span>  |  <span class="var">m/s</span> <span class="op">=</span> <span class="var">kts</span> <span class="op">×</span> <span class="num">0.514444</span>'
+    }
+  ],
+  temperature: [
+    {
+      id:'C-F', siName:'Celsius', siUnit:'°C', impName:'Fahrenheit', impUnit:'°F',
+      siToImp: v => v * 9/5 + 32,
+      impToSi: v => (v - 32) * 5/9,
+      formula: '<span class="var">°F</span> <span class="op">=</span> (<span class="var">°C</span> <span class="op">×</span> <span class="num">9/5</span>) <span class="op">+</span> <span class="num">32</span>  |  <span class="var">°C</span> <span class="op">=</span> (<span class="var">°F</span> <span class="op">−</span> <span class="num">32</span>) <span class="op">×</span> <span class="num">5/9</span>'
+    },
+    {
+      id:'K-F', siName:'Kelvin', siUnit:'K', impName:'Fahrenheit', impUnit:'°F',
+      siToImp: v => (v - 273.15) * 9/5 + 32,
+      impToSi: v => (v - 32) * 5/9 + 273.15,
+      formula: '<span class="var">°F</span> <span class="op">=</span> (<span class="var">K</span> <span class="op">−</span> <span class="num">273.15</span>) <span class="op">×</span> <span class="num">9/5</span> <span class="op">+</span> <span class="num">32</span>'
+    },
+    {
+      id:'K-R', siName:'Kelvin', siUnit:'K', impName:'Rankine', impUnit:'°R',
+      siToImp: v => v * 1.8,
+      impToSi: v => v / 1.8,
+      formula: '<span class="var">°R</span> <span class="op">=</span> <span class="var">K</span> <span class="op">×</span> <span class="num">1.8</span>  |  <span class="var">K</span> <span class="op">=</span> <span class="var">°R</span> <span class="op">÷</span> <span class="num">1.8</span>'
+    },
+    {
+      id:'C-R', siName:'Celsius', siUnit:'°C', impName:'Rankine', impUnit:'°R',
+      siToImp: v => (v + 273.15) * 1.8,
+      impToSi: v => v / 1.8 - 273.15,
+      formula: '<span class="var">°R</span> <span class="op">=</span> (<span class="var">°C</span> <span class="op">+</span> <span class="num">273.15</span>) <span class="op">×</span> <span class="num">1.8</span>'
+    }
+  ],
+  power: [
+    {
+      id:'W-hp', siName:'Watt', siUnit:'W', impName:'Cavalli vapore', impUnit:'hp',
+      siToImp: v => v * 0.001341022,
+      impToSi: v => v / 0.001341022,
+      formula: '<span class="var">hp</span> <span class="op">=</span> <span class="var">W</span> <span class="op">×</span> <span class="num">0.001341022</span>  |  <span class="var">W</span> <span class="op">=</span> <span class="var">hp</span> <span class="op">×</span> <span class="num">745.69987</span>'
+    },
+    {
+      id:'kW-hp', siName:'Kilowatt', siUnit:'kW', impName:'Cavalli vapore', impUnit:'hp',
+      siToImp: v => v * 1.341022089,
+      impToSi: v => v / 1.341022089,
+      formula: '<span class="var">hp</span> <span class="op">=</span> <span class="var">kW</span> <span class="op">×</span> <span class="num">1.341022089</span>  |  <span class="var">kW</span> <span class="op">=</span> <span class="var">hp</span> <span class="op">×</span> <span class="num">0.74569987</span>'
+    },
+    {
+      id:'W-BTUh', siName:'Watt', siUnit:'W', impName:'BTU/ora', impUnit:'BTU/h',
+      siToImp: v => v * 3.412141633,
+      impToSi: v => v / 3.412141633,
+      formula: '<span class="var">BTU/h</span> <span class="op">=</span> <span class="var">W</span> <span class="op">×</span> <span class="num">3.412141633</span>  |  <span class="var">W</span> <span class="op">=</span> <span class="var">BTU/h</span> <span class="op">×</span> <span class="num">0.29307107</span>'
+    },
+    {
+      id:'kW-BTUh', siName:'Kilowatt', siUnit:'kW', impName:'BTU/ora', impUnit:'BTU/h',
+      siToImp: v => v * 3412.141633,
+      impToSi: v => v / 3412.141633,
+      formula: '<span class="var">BTU/h</span> <span class="op">=</span> <span class="var">kW</span> <span class="op">×</span> <span class="num">3412.14163</span>  |  <span class="var">kW</span> <span class="op">=</span> <span class="var">BTU/h</span> <span class="op">×</span> <span class="num">0.000293071</span>'
+    }
+  ],
+  area: [
+    {
+      id:'m2-ft2', siName:'Metro²', siUnit:'m²', impName:'Piede²', impUnit:'ft²',
+      siToImp: v => v * 10.76391042,
+      impToSi: v => v / 10.76391042,
+      formula: '<span class="var">ft²</span> <span class="op">=</span> <span class="var">m²</span> <span class="op">×</span> <span class="num">10.76391042</span>  |  <span class="var">m²</span> <span class="op">=</span> <span class="var">ft²</span> <span class="op">×</span> <span class="num">0.09290304</span>'
+    },
+    {
+      id:'km2-mi2', siName:'Km²', siUnit:'km²', impName:'Miglio²', impUnit:'mi²',
+      siToImp: v => v * 0.386102159,
+      impToSi: v => v / 0.386102159,
+      formula: '<span class="var">mi²</span> <span class="op">=</span> <span class="var">km²</span> <span class="op">×</span> <span class="num">0.386102159</span>  |  <span class="var">km²</span> <span class="op">=</span> <span class="var">mi²</span> <span class="op">×</span> <span class="num">2.58998811</span>'
+    },
+    {
+      id:'ha-acre', siName:'Ettaro', siUnit:'ha', impName:'Acro', impUnit:'acre',
+      siToImp: v => v * 2.471053815,
+      impToSi: v => v / 2.471053815,
+      formula: '<span class="var">acre</span> <span class="op">=</span> <span class="var">ha</span> <span class="op">×</span> <span class="num">2.471053815</span>  |  <span class="var">ha</span> <span class="op">=</span> <span class="var">acre</span> <span class="op">×</span> <span class="num">0.40468564</span>'
+    },
+    {
+      id:'cm2-in2', siName:'cm²', siUnit:'cm²', impName:'Pollice²', impUnit:'in²',
+      siToImp: v => v * 0.15500031,
+      impToSi: v => v / 0.15500031,
+      formula: '<span class="var">in²</span> <span class="op">=</span> <span class="var">cm²</span> <span class="op">×</span> <span class="num">0.15500031</span>  |  <span class="var">cm²</span> <span class="op">=</span> <span class="var">in²</span> <span class="op">×</span> <span class="num">6.4516</span>'
+    },
+    {
+      id:'m2-yd2', siName:'Metro²', siUnit:'m²', impName:'Iarda²', impUnit:'yd²',
+      siToImp: v => v * 1.19599005,
+      impToSi: v => v / 1.19599005,
+      formula: '<span class="var">yd²</span> <span class="op">=</span> <span class="var">m²</span> <span class="op">×</span> <span class="num">1.19599005</span>  |  <span class="var">m²</span> <span class="op">=</span> <span class="var">yd²</span> <span class="op">×</span> <span class="num">0.83612736</span>'
+    }
+  ]
+};
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+const state = {};
+Object.keys(CONVERSIONS).forEach(cat => { state[cat] = 0; });
+
+// ═══════════════════════════════════════════════════
+// BUILD UI
+// ═══════════════════════════════════════════════════
+function fmt(v) {
+  if (v === '' || v === null || isNaN(v)) return '';
+  const abs = Math.abs(v);
+  if (abs === 0) return '0';
+  if (abs >= 1e9) return v.toExponential(6);
+  if (abs >= 1e6) return parseFloat(v.toFixed(2)).toLocaleString('it-IT');
+  if (abs >= 100) return parseFloat(v.toFixed(4)).toString();
+  if (abs >= 1) return parseFloat(v.toFixed(6)).toString();
+  if (abs >= 0.001) return parseFloat(v.toFixed(8)).toString();
+  return v.toExponential(6);
+}
+
+function buildConverter(cat) {
+  const convs = CONVERSIONS[cat];
+  const stIdx = state[cat] || 0;
+
+  // subtabs
+  const stEl = document.getElementById('subtabs-' + cat);
+  stEl.innerHTML = convs.map((c,i) =>
+    `<button class="subtab${i===stIdx?' active':''}" onclick="selectSub('${cat}',${i})">${c.siUnit} ↔ ${c.impUnit}</button>`
+  ).join('');
+
+  // converter
+  const c = convs[stIdx];
+  const container = document.getElementById('conv-' + cat);
+  container.innerHTML = `
+    <div class="converter" id="cvt-${cat}">
+      <div class="input-group">
+        <div class="input-label">
+          <span class="unit-name">${c.siName}</span>
+          <span class="unit-system si">SI</span>
+        </div>
+        <input type="number" id="si-${cat}" placeholder="0" class="si-input"
+          oninput="convertFromSI('${cat}')" />
+      </div>
+      <div class="swap-col">
+        <button class="swap-btn" title="Inverti" onclick="swapValues('${cat}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M17 4l4 4-4 4M7 20l-4-4 4-4M21 8H3M21 16H3"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-group">
+        <div class="input-label">
+          <span class="unit-name">${c.impName}</span>
+          <span class="unit-system imperial">IMP</span>
+        </div>
+        <input type="number" id="imp-${cat}" placeholder="0" class="imperial-input"
+          oninput="convertFromImp('${cat}')" />
+      </div>
+    </div>
+    <div class="result-row">
+      <span class="result-label">RISULTATO</span>
+      <span class="result-value" id="result-${cat}">— inserire valore —</span>
+    </div>
+    <div class="formula-box">
+      <div class="formula-label">▶ FORMULA DI CONVERSIONE</div>
+      <div class="formula-text">${c.formula}</div>
+    </div>
+  `;
+}
+
+function selectSub(cat, idx) {
+  state[cat] = idx;
+  buildConverter(cat);
+}
+
+function convertFromSI(cat) {
+  const c = CONVERSIONS[cat][state[cat]];
+  const v = parseFloat(document.getElementById('si-'+cat).value);
+  const impEl = document.getElementById('imp-'+cat);
+  const resEl = document.getElementById('result-'+cat);
+  if (isNaN(v)) {
+    impEl.value = '';
+    resEl.textContent = '— inserire valore —';
+    return;
+  }
+  const result = c.siToImp(v);
+  impEl.value = fmt(result);
+  resEl.textContent = `${fmt(v)} ${c.siUnit}  →  ${fmt(result)} ${c.impUnit}`;
+}
+
+function convertFromImp(cat) {
+  const c = CONVERSIONS[cat][state[cat]];
+  const v = parseFloat(document.getElementById('imp-'+cat).value);
+  const siEl = document.getElementById('si-'+cat);
+  const resEl = document.getElementById('result-'+cat);
+  if (isNaN(v)) {
+    siEl.value = '';
+    resEl.textContent = '— inserire valore —';
+    return;
+  }
+  const result = c.impToSi(v);
+  siEl.value = fmt(result);
+  resEl.textContent = `${fmt(v)} ${c.impUnit}  →  ${fmt(result)} ${c.siUnit}`;
+}
+
+function swapValues(cat) {
+  const si = document.getElementById('si-'+cat);
+  const imp = document.getElementById('imp-'+cat);
+  const tmp = si.value;
+  si.value = imp.value;
+  imp.value = tmp;
+  convertFromSI(cat);
+}
+
+// ═══════════════════════════════════════════════════
+// PANEL SWITCHING
+// ═══════════════════════════════════════════════════
+function switchPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.querySelector(`[data-panel="${name}"]`).classList.add('active');
+  buildConverter(name);
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  Object.keys(CONVERSIONS).forEach(cat => { state[cat] = 0; });
+  buildConverter('length');
+});
+</script>
+</body>
+</html>
